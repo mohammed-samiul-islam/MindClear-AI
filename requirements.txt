@@ -1,0 +1,9 @@
+# Mirror of backend/requirements.txt for deployment from repo root.
+# Install with: pip install -r requirements.txt
+fastapi
+uvicorn[standard]
+SQLAlchemy
+psycopg2-binary
+httpx
+python-dotenv
+pydantic-settings
