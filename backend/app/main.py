@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="MindClear AI Backend", version="0.1.0")
+app = FastAPI(title="MindClear AI Backend", version="0.2.0")
 
 # Create tables on startup (for production consider Alembic migrations).
 Base.metadata.create_all(bind=engine)
@@ -33,7 +33,7 @@ app.include_router(conversions.router)
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "llm_provider": settings.resolved_provider()}
 
 
 @app.get("/")

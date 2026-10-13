@@ -29,7 +29,7 @@ export default function TaskCard({ task, onUpdate }) {
   }
 
   const deadlineStr = task.deadline
-    ? new Date(task.deadline).toLocaleDateString()
+    ? new Date(`${task.deadline}T00:00:00`).toLocaleDateString()
     : null
 
   return (
