@@ -43,7 +43,7 @@ When your head is full of scattered to-dos (“call mom, pay rent, dentist next 
 1. **Clone the repo**
 
    ```bash
-   git clone https://github.com/your-username/MindClear-AI.git
+   git clone https://github.com/mohammed-samiul-islam/MindClear-AI.git
    cd MindClear-AI
    ```
 
