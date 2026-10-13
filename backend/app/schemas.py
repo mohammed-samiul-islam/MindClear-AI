@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 CategoryType = Literal["Work", "Personal", "Health", "Finance", "Other"]
@@ -26,8 +26,7 @@ class TaskRead(TaskBase):
     completed: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConversionRead(BaseModel):
@@ -35,8 +34,7 @@ class ConversionRead(BaseModel):
     raw_input: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConversionWithTasks(BaseModel):
@@ -45,8 +43,7 @@ class ConversionWithTasks(BaseModel):
     created_at: datetime
     tasks: List[TaskRead]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TaskUpdate(BaseModel):
@@ -63,8 +60,7 @@ class ConversionListItem(BaseModel):
     created_at: datetime
     task_count: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConversionsListResponse(BaseModel):
@@ -72,10 +68,11 @@ class ConversionsListResponse(BaseModel):
 
 
 class AnalyzeRequest(BaseModel):
-    text: str = Field(..., min_length=1, description="Raw brain dump text from the user")
+    text: str = Field(..., min_length=1, max_length=10000, description="Raw brain dump text from the user")
 
 
 class AnalyzeResponse(BaseModel):
     conversion_id: str
+    source: str = Field(..., description='"groq", "gemini" or "rules" (fallback)')
     tasks: List[TaskRead]
 
