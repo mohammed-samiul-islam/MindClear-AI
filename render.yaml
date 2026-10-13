@@ -1,0 +1,27 @@
+# Render Blueprint for the MindClear AI backend (free instance type).
+# Secrets are declared with sync: false so Render prompts for them on first deploy.
+services:
+  - type: web
+    name: mindclear-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL        # Neon pooled connection string (…?sslmode=require)
+        sync: false
+      - key: CORS_ORIGINS        # e.g. https://mindclear-ai.vercel.app
+        sync: false
+      - key: LLM_PROVIDER
+        value: auto
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: GEMINI_API_KEY      # optional alternative/backup provider
+        sync: false
