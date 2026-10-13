@@ -10,7 +10,7 @@ Turn a messy "brain dump" into clear, categorized tasks. Paste something like
 and get back tasks with a **category** (Work / Personal / Health / Finance / Other), a **priority**
 (High / Medium / Low) and a **deadline**, which you can filter, complete and delete.
 
-**Live demo:** _coming soon_ <!-- replace with your Vercel URL -->
+**Live demo:** [mind-clear-ai.vercel.app](https://mind-clear-ai.vercel.app) (backend on Render free tier; first request may take ~30s to wake up)
 
 ## Tech stack
 
