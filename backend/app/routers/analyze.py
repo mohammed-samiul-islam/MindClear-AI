@@ -1,35 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..ai_service import analyze_text_to_tasks
-from ..database import get_db
+from ..ai_service import analyze_text_to_tasks_with_source
+from ..dependencies import get_db, get_session_id
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
 
 @router.post("", response_model=schemas.AnalyzeResponse)
-async def analyze(request: schemas.AnalyzeRequest, db: Session = Depends(get_db)):
+async def analyze(
+    request: schemas.AnalyzeRequest,
+    db: Session = Depends(get_db),
+    session_id: str = Depends(get_session_id),
+):
     try:
-        task_creates = await analyze_text_to_tasks(request.text)
-    except RuntimeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"AI processing failed: {e}",
-        )
+        task_creates, source = await analyze_text_to_tasks_with_source(request.text)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
-    conversion = models.Conversion(raw_input=request.text)
+    conversion = models.Conversion(raw_input=request.text, session_id=session_id, source=source)
     db.add(conversion)
     db.flush()
 
     tasks = []
     for tc in task_creates:
         task = models.Task(
+            session_id=session_id,
             conversion_id=conversion.id,
             task=tc.task,
             category=tc.category,
@@ -40,11 +37,11 @@ async def analyze(request: schemas.AnalyzeRequest, db: Session = Depends(get_db)
         tasks.append(task)
 
     db.commit()
-    db.refresh(conversion)
     for task in tasks:
         db.refresh(task)
 
     return schemas.AnalyzeResponse(
         conversion_id=str(conversion.id),
+        source=source,
         tasks=[schemas.TaskRead.model_validate(task) for task in tasks],
     )

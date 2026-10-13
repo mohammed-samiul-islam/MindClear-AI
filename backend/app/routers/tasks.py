@@ -4,20 +4,32 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..database import get_db
+from ..dependencies import get_db, get_session_id
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+def _get_owned_task(db: Session, task_id: UUID, session_id: str) -> models.Task:
+    task = (
+        db.query(models.Task)
+        .filter(models.Task.id == task_id, models.Task.session_id == session_id)
+        .first()
+    )
+    if not task:  # 404 (not 403) so other sessions' ids are not revealed
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
 
 
 @router.get("", response_model=schemas.TasksListResponse)
 def list_tasks(
     db: Session = Depends(get_db),
+    session_id: str = Depends(get_session_id),
     category: str | None = Query(None, description="Filter by category"),
     priority: str | None = Query(None, description="Filter by priority"),
     completed: bool | None = Query(None, description="Filter by completed status"),
     conversion_id: UUID | None = Query(None, description="Filter by conversion (brain dump)"),
 ):
-    q = db.query(models.Task)
+    q = db.query(models.Task).filter(models.Task.session_id == session_id)
     if category is not None:
         q = q.filter(models.Task.category == category)
     if priority is not None:
@@ -35,10 +47,9 @@ def update_task(
     task_id: UUID,
     payload: schemas.TaskUpdate,
     db: Session = Depends(get_db),
+    session_id: str = Depends(get_session_id),
 ):
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    task = _get_owned_task(db, task_id, session_id)
     if payload.completed is not None:
         task.completed = payload.completed
     db.commit()
@@ -47,10 +58,12 @@ def update_task(
 
 
 @router.delete("/{task_id}", status_code=204)
-def delete_task(task_id: UUID, db: Session = Depends(get_db)):
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+def delete_task(
+    task_id: UUID,
+    db: Session = Depends(get_db),
+    session_id: str = Depends(get_session_id),
+):
+    task = _get_owned_task(db, task_id, session_id)
     db.delete(task)
     db.commit()
     return None
